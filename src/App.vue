@@ -5,15 +5,18 @@ import HelloWorld from './components/HelloWorld.vue'
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+
+    <img style="cursor: pointer; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.5));" alt="mark & vinny" class="logo" src="@/assets/vinny_mark.jpeg" width="125" height="125" @click="navigateTo('https://markdavidjamesbonner.github.io/#/')" />
 
     <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+      <HelloWorld msg="recipe-time!" />
 
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+        <!-- <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/about">About</RouterLink> -->
+        <RouterLink to="/recipes">Keep track of your (good) recipes here. No duds.</RouterLink>
       </nav>
+
     </div>
   </header>
 
@@ -29,13 +32,14 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
+  border-radius: 50%;
 }
 
 nav {
   width: 100%;
   font-size: 12px;
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 nav a.router-link-exact-active {
@@ -79,7 +83,7 @@ nav a:first-of-type {
     font-size: 1rem;
 
     padding: 1rem 0;
-    margin-top: 1rem;
+    /* margin-top: 1rem; */
   }
 }
 </style>

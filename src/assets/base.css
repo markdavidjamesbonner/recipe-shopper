@@ -61,10 +61,11 @@
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
+  /* background: var(--color-background); */
+  background: hsla(20, 100%, 67%, 1);
   transition:
-    color 0.5s,
-    background-color 0.5s;
+    color 1.5s,
+    background-color 1.5s;
   line-height: 1.6;
   font-family:
     Inter,
