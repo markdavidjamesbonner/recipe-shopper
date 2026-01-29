@@ -133,18 +133,18 @@ onMounted(() => {
 <template>
   <div class="recipes-view">
     <div class="header">
-      <h1>My Recipes</h1>
+      <h1>recipes will be here</h1>
       <button @click="showForm = !showForm" class="btn-primary">
-        {{ showForm ? 'Cancel' : '+ Add Recipe' }}
+        {{ showForm ? 'cancel' : '+ add recipe' }}
       </button>
     </div>
 
     <!-- Add Recipe Form -->
     <div v-if="showForm" class="recipe-form">
-      <h2>Add New Recipe</h2>
+      <h2>add new recipe</h2>
       <form @submit.prevent="addRecipe">
         <div class="form-group">
-          <label>Recipe Name *</label>
+          <label>recipe name *</label>
           <input v-model="newRecipe.name" type="text" required placeholder="e.g., Chocolate Chip Cookies" />
         </div>
 
@@ -175,7 +175,7 @@ onMounted(() => {
           <textarea v-model="newRecipe.notes" rows="3" placeholder="Any additional notes or tips"></textarea>
         </div>
 
-        <button type="submit" class="btn-primary btn-large">Save Recipe</button>
+        <button type="submit" class="btn-primary btn-large">save recipe</button>
       </form>
     </div>
 
@@ -229,8 +229,8 @@ onMounted(() => {
           <div class="recipe-card-header">
             <h2>{{ recipe.name }}</h2>
             <div class="recipe-card-actions">
-              <button type="button" class="btn-edit" aria-label="Edit recipe" @click="startEditing(recipe)">Edit</button>
-              <button type="button" class="btn-delete" aria-label="Delete recipe" @click="deleteRecipe(recipe.id)">Delete</button>
+              <button type="button" class="btn-edit" aria-label="Edit recipe" @click="startEditing(recipe)">edit</button>
+              <button type="button" class="btn-delete" aria-label="Delete recipe" @click="deleteRecipe(recipe.id)">delete</button>
             </div>
           </div>
           <div class="recipe-meta">
