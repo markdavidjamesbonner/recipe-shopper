@@ -1,11 +1,23 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../supabase'
 
 const recipes = ref([])
 const loading = ref(true)
 const showForm = ref(false)
 const editingId = ref(null)
+const searchQuery = ref('')
+
+// Computed property to filter recipes by title
+const filteredRecipes = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return recipes.value
+  }
+  const query = searchQuery.value.toLowerCase().trim()
+  return recipes.value.filter((recipe) =>
+    recipe.name?.toLowerCase().includes(query)
+  )
+})
 
 // Form fields
 const newRecipe = ref({
@@ -139,6 +151,16 @@ onMounted(() => {
       </button>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search recipes by title..."
+        class="search-input"
+      />
+    </div>
+
     <!-- Add Recipe Form -->
     <div v-if="showForm" class="recipe-form">
       <h2>add new recipe</h2>
@@ -186,8 +208,12 @@ onMounted(() => {
       <p>No recipes yet. Add your first one!</p>
     </div>
 
+    <div v-else-if="filteredRecipes.length === 0 && searchQuery.trim()">
+      <p class="no-results">No recipes found matching "{{ searchQuery }}"</p>
+    </div>
+
     <div v-else class="recipes-list">
-      <div v-for="recipe in recipes" :key="recipe.id" class="recipe-card">
+      <div v-for="recipe in filteredRecipes" :key="recipe.id" class="recipe-card">
         <!-- Edit mode -->
         <template v-if="editingId === recipe.id">
           <h2>Edit Recipe</h2>
@@ -449,7 +475,7 @@ onMounted(() => {
 .recipe-section p {
   margin: 0;
   color: #555;
-  line-height: 1.6;
+  line-height: 1.1;
   white-space: pre-line;
 }
 
@@ -457,5 +483,36 @@ onMounted(() => {
   text-align: center;
   padding: 2rem;
   color: #666;
+}
+
+.search-bar {
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #42b983;
+  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.15);
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
 }
 </style>
