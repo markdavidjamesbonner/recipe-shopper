@@ -9,6 +9,10 @@ const router = createRouter({
       redirect: { name: 'recipes' },
     },
     {
+      path: '/index.html',
+      redirect: { name: 'recipes' },
+    },
+    {
       path: '/recipes',
       name: 'recipes',
       component: () => import('../views/RecipesView.vue'),
