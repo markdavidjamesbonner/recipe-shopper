@@ -41,7 +41,8 @@ create table public.recipes (
   instructions text,
   prep_time int,
   servings int,
-  notes text
+  notes text,
+  locked boolean default false
 );
 
 -- Optional: allow anonymous read/write for development
@@ -49,9 +50,27 @@ alter table public.recipes enable row level security;
 create policy "Allow all for recipes" on public.recipes for all using (true) with check (true);
 ```
 
+If the table already exists, add the lock column:
+
+```sql
+alter table public.recipes add column if not exists locked boolean default false;
+```
+
 Adjust RLS policies for production as needed.
 
-### 3. Run the app
+### 3. Unlock password (optional)
+
+Recipe cards can be **locked** so edit/delete are hidden. Unlocking requires a password. Set it in a `.env` file (create from `.env.example` so it isn’t committed):
+
+```sh
+cp .env.example .env
+# Edit .env and set:
+# VITE_UNLOCK_PASSWORD=your-secret-password
+```
+
+Only you (who know the password) can unlock cards. If `VITE_UNLOCK_PASSWORD` is not set, the app will show a message when someone tries to unlock.
+
+### 4. Run the app
 
 ```sh
 npm run dev

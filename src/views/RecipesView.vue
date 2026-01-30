@@ -8,6 +8,14 @@ const showForm = ref(false)
 const editingId = ref(null)
 const searchQuery = ref('')
 
+// Unlock modal (password required to unlock a card)
+const showUnlockModal = ref(false)
+const unlockRecipe = ref(null)
+const unlockPassword = ref('')
+const unlockError = ref('')
+
+const unlockPasswordEnv = import.meta.env.VITE_UNLOCK_PASSWORD ?? ''
+
 // Computed property to filter recipes by title
 const filteredRecipes = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -51,7 +59,7 @@ async function fetchRecipes() {
       console.error('Error fetching recipes:', error)
       recipes.value = []
     } else {
-      recipes.value = data ?? []
+      recipes.value = (data ?? []).map((r) => ({ ...r, locked: r.locked === true }))
     }
   } catch (err) {
     console.error('Error fetching recipes:', err)
@@ -62,7 +70,8 @@ async function fetchRecipes() {
 }
 
 async function addRecipe() {
-  const { data, error } = await supabase.from('recipes').insert([newRecipe.value]).select()
+  const payload = { ...newRecipe.value, locked: false }
+  const { data, error } = await supabase.from('recipes').insert([payload]).select()
 
   if (error) {
     console.error('Error adding recipe:', error)
@@ -135,6 +144,57 @@ async function deleteRecipe(id) {
     if (editingId.value === id) editingId.value = null
     recipes.value = recipes.value.filter((r) => r.id !== id)
   }
+}
+
+function isLocked(recipe) {
+  return recipe.locked === true
+}
+
+async function setLock(recipe, locked) {
+  const { data, error } = await supabase
+    .from('recipes')
+    .update({ locked })
+    .eq('id', recipe.id)
+    .select()
+  if (error) {
+    console.error('Error updating lock:', error)
+    alert('Failed to update lock')
+    return
+  }
+  const index = recipes.value.findIndex((r) => r.id === recipe.id)
+  if (index !== -1 && data?.[0]) recipes.value[index] = data[0]
+}
+
+function toggleLock(recipe) {
+  if (recipe.locked) {
+    unlockRecipe.value = recipe
+    unlockPassword.value = ''
+    unlockError.value = ''
+    showUnlockModal.value = true
+  } else {
+    setLock(recipe, true)
+  }
+}
+
+function closeUnlockModal() {
+  showUnlockModal.value = false
+  unlockRecipe.value = null
+  unlockPassword.value = ''
+  unlockError.value = ''
+}
+
+function submitUnlock() {
+  if (!unlockRecipe.value) return
+  if (!unlockPasswordEnv) {
+    unlockError.value = 'Unlock password is not configured. Set VITE_UNLOCK_PASSWORD in .env'
+    return
+  }
+  if (unlockPassword.value !== unlockPasswordEnv) {
+    unlockError.value = 'Incorrect password'
+    return
+  }
+  setLock(unlockRecipe.value, false)
+  closeUnlockModal()
 }
 
 onMounted(() => {
@@ -255,8 +315,19 @@ onMounted(() => {
           <div class="recipe-card-header">
             <h2>{{ recipe.name }}</h2>
             <div class="recipe-card-actions">
-              <button type="button" class="btn-edit" aria-label="Edit recipe" @click="startEditing(recipe)">edit</button>
-              <button type="button" class="btn-delete" aria-label="Delete recipe" @click="deleteRecipe(recipe.id)">delete</button>
+              <button
+                type="button"
+                :class="['btn-lock', { 'is-locked': isLocked(recipe) }]"
+                :aria-label="isLocked(recipe) ? 'Unlock recipe' : 'Lock recipe'"
+                :title="isLocked(recipe) ? 'Unlock (enable edit/delete)' : 'Lock (disable edit/delete)'"
+                @click="toggleLock(recipe)"
+              >
+                {{ isLocked(recipe) ? 'unlock' : 'lock' }}
+              </button>
+              <template v-if="!isLocked(recipe)">
+                <button type="button" class="btn-edit" aria-label="Edit recipe" @click="startEditing(recipe)">edit</button>
+                <button type="button" class="btn-delete" aria-label="Delete recipe" @click="deleteRecipe(recipe.id)">delete</button>
+              </template>
             </div>
           </div>
           <div class="recipe-meta">
@@ -278,6 +349,34 @@ onMounted(() => {
         </template>
       </div>
     </div>
+
+    <!-- Unlock modal (password required) -->
+    <Teleport to="body">
+      <div v-if="showUnlockModal" class="unlock-modal-overlay" @click.self="closeUnlockModal">
+        <div class="unlock-modal">
+          <h3>Unlock recipe</h3>
+          <p class="unlock-modal-hint">Enter your password to unlock this card and enable edit/delete.</p>
+          <form @submit.prevent="submitUnlock" class="unlock-form">
+            <div class="form-group">
+              <label for="unlock-password">Password</label>
+              <input
+                id="unlock-password"
+                v-model="unlockPassword"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter unlock password"
+                class="unlock-input"
+              />
+            </div>
+            <p v-if="unlockError" class="unlock-error">{{ unlockError }}</p>
+            <div class="unlock-modal-actions">
+              <button type="button" class="btn-secondary" @click="closeUnlockModal">Cancel</button>
+              <button type="submit" class="btn-primary">Unlock</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -393,6 +492,32 @@ onMounted(() => {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.btn-lock {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #888;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn-lock:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-lock.is-locked {
+  border-color: #42b983;
+  color: #42b983;
+  background: #f0faf5;
+}
+
+.btn-lock.is-locked:hover {
+  background: #e0f5ec;
 }
 
 .btn-edit {
@@ -514,5 +639,70 @@ onMounted(() => {
   padding: 2rem;
   color: #666;
   font-style: italic;
+}
+</style>
+
+<style>
+/* Unlock modal: global so Teleport body works with overlay */
+.unlock-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.unlock-modal {
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.unlock-modal h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.unlock-modal-hint {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.unlock-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.unlock-form .form-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.unlock-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.unlock-error {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #c33;
+}
+
+.unlock-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 </style>
