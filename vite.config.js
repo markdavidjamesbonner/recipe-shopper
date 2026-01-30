@@ -24,8 +24,8 @@ function githubPages404() {
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  // GitHub Pages subpath; use '/' for local dev (vite dev server)
-  base: mode === 'production' ? '/sandbox/recipe_shopper/' : '/',
+  // GitHub Pages subpath; must match repo/folder name (recipe-shopper)
+  base: mode === 'production' ? '/sandbox/recipe-shopper/' : '/',
   plugins: [vue(), vueDevTools(), githubPages404()],
   resolve: {
     alias: {
